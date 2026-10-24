@@ -2,7 +2,7 @@
 
 Mikroserwis platformy **Rynek**: `identity-service` — konta, logowanie, role, profil
 
-Zakres, endpointy i zdarzenia są opisane w `README.md`. Na razie to szkielet: endpointy zwracają 501, DTO są puste. Nie dodawaj logiki bez wyraźnej prośby.
+Zakres, endpointy i zdarzenia są opisane w `README.md`. Konta, logowanie, sesje, profil i role działają (PostgreSQL + Flyway, Spring Security, JWT RS256). Pozostałe endpointy zwracają 501. Nie dodawaj logiki bez wyraźnej prośby.
 
 ## Wspólne konwencje API (§1 dokumentu architektury)
 
@@ -24,7 +24,7 @@ Legenda kolumny **Dostęp**: `pub` = bez logowania, `user` = zalogowany, `seller
 ## Stack
 
 - Java 25, Spring Boot 4.1 (Maven, `./mvnw`)
-- Dane: PostgreSQL
+- Dane: PostgreSQL (Spring Data JPA, migracje Flyway); testy na Testcontainers
 - Zdarzenia: Kafka, nazwy `domena.zdarzenie`
 
 ## Powiązane repozytoria
@@ -35,6 +35,7 @@ Legenda kolumny **Dostęp**: `pub` = bez logowania, `user` = zalogowany, `seller
 
 ## Struktura kodu
 
-- `pl.rynek.identity.api`: kontrolery REST (pełne ścieżki w adnotacjach), `api.dto`: rekordy żądań, `common.NotImplemented`: odpowiedź 501
+- `pl.rynek.identity.api`: kontrolery REST (pełne ścieżki w adnotacjach), `api.dto`: rekordy żądań i odpowiedzi, `common.NotImplemented`: odpowiedź 501
+- `account`: konto, role, rejestracja i profil; `auth`: sesje, refresh tokeny, wydawanie JWT, klucze; `config`: security, błędy RFC 7807 po polsku
 - Konfiguracja: `src/main/resources/application.yml`
 - Port lokalny: 8081

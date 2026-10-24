@@ -1,5 +1,10 @@
 package pl.rynek.identity.api;
 
+import java.util.UUID;
+
+import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -8,31 +13,39 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import pl.rynek.identity.account.AccountService;
 import pl.rynek.identity.api.dto.CreateAddressRequest;
 import pl.rynek.identity.api.dto.SetPreferencesRequest;
 import pl.rynek.identity.api.dto.SetRolesRequest;
 import pl.rynek.identity.api.dto.UpdateAddressRequest;
 import pl.rynek.identity.api.dto.UpdateMeRequest;
+import pl.rynek.identity.api.dto.UserResponse;
 
 import static pl.rynek.identity.common.NotImplemented.notImplemented;
 
 @RestController
 public class UsersController {
 
+    private final AccountService accounts;
+
+    public UsersController(AccountService accounts) {
+        this.accounts = accounts;
+    }
+
     /**
      * Profil zalogowanego. Dostęp: user.
      */
     @GetMapping("/api/v1/users/me")
-    public void getMe() {
-        throw notImplemented();
+    public UserResponse getMe(@AuthenticationPrincipal Jwt token) {
+        return UserResponse.of(accounts.get(userId(token)));
     }
 
     /**
      * Zmiana danych profilu. Dostęp: user.
      */
     @PatchMapping("/api/v1/users/me")
-    public void updateMe(@RequestBody UpdateMeRequest request) {
-        throw notImplemented();
+    public UserResponse updateMe(@AuthenticationPrincipal Jwt token, @Valid @RequestBody UpdateMeRequest request) {
+        return UserResponse.of(accounts.update(userId(token), request));
     }
 
     /**
@@ -47,8 +60,8 @@ public class UsersController {
      * Wybór ról z onboardingu (kupujący / usługodawca / merchant). Dostęp: user.
      */
     @PutMapping("/api/v1/users/me/roles")
-    public void setRoles(@RequestBody SetRolesRequest request) {
-        throw notImplemented();
+    public UserResponse setRoles(@AuthenticationPrincipal Jwt token, @Valid @RequestBody SetRolesRequest request) {
+        return UserResponse.of(accounts.chooseRoles(userId(token), request.roles()));
     }
 
     /**
@@ -113,5 +126,9 @@ public class UsersController {
     @DeleteMapping("/api/v1/users/me/saved/{offerId}")
     public void unsaveOffer(@PathVariable String offerId) {
         throw notImplemented();
+    }
+
+    private static UUID userId(Jwt token) {
+        return UUID.fromString(token.getSubject());
     }
 }
