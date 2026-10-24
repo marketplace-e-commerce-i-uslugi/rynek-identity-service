@@ -44,6 +44,15 @@ Ekrany: 1 Onboarding, Profil, każdy ekran wymagający logowania.
 | PUT | `/api/v1/users/me/saved/{offerId}` | Zapisz ofertę | user |
 | DELETE | `/api/v1/users/me/saved/{offerId}` | Usuń z zapisanych | user |
 | GET | `/internal/users/{userId}` | Dane użytkownika dla innych serwisów | int |
+| GET | `/internal/auth/jwks` | Klucze publiczne JWT (JWKS) dla gateway i serwisów | int |
+
+### Token dostępowy
+
+Uzgodnione z `rynek-api-gateway`, które waliduje token:
+
+- JWT podpisany RS256; klucz publiczny w `GET /internal/auth/jwks` (format JWK Set, z `kid`);
+- claimy: `iss` = `rynek-identity`, `sub` = id użytkownika, `roles` = lista z `BUYER`, `SERVICE_PROVIDER`, `MERCHANT`, `ADMIN`, `exp`, `iat`;
+- po wdrożeniu logowania uruchom gateway z `JWT_ENFORCE=true`.
 
 ## Zdarzenia Kafka
 
@@ -64,8 +73,8 @@ Wiersze z §17, w których występuje `identity` (publikuje lub słucha).
 
 Etap z §19: 1. `api-gateway`, `identity-service`, `channel-service` — konta i kanały.
 
-## Do rozstrzygnięcia
+## Wyjątki routingu
 
-Gateway (§2) kieruje ruch po prefiksie ścieżki, a poniższe endpointy leżą pod prefiksem innego serwisu. Możliwe rozwiązania: szczegółowe trasy w gateway przed trasami prefiksowymi albo zmiana ścieżek.
+Gateway (§2) kieruje ruch po prefiksie ścieżki, a poniższe endpointy leżą pod prefiksem innego serwisu. Gateway obsługuje je trasami szczegółowymi (`order: -1`), które mają pierwszeństwo przed trasami po prefiksie. Ścieżki pozostają bez zmian (decyzja z 2026-10-24). Test `RoutingTests` w `rynek-api-gateway` sprawdza, czy każda z nich trafia do właściwego serwisu.
 
-- `/api/v1/users/me/following`: według dokumentu należy do `channel-service`, ale prefiks w gateway kieruje do `identity-service`.
+- `/api/v1/users/me/following`: należy do `channel-service` (prefiks wskazuje `identity-service`).
