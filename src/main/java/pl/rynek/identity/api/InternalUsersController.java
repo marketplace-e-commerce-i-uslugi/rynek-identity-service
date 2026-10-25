@@ -2,12 +2,16 @@ package pl.rynek.identity.api;
 
 import java.util.UUID;
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import pl.rynek.identity.account.AccountService;
+import pl.rynek.identity.api.dto.LinkChannelRequest;
 import pl.rynek.identity.api.dto.UserResponse;
 
 @RestController
@@ -24,12 +28,22 @@ public class InternalUsersController {
      */
     @GetMapping("/internal/users/{userId}")
     public UserResponse getUser(@PathVariable String userId) {
-        UUID id;
+        return UserResponse.of(accounts.get(parse(userId)));
+    }
+
+    /**
+     * Przypięcie kanału do konta przez channel-service (tymczasowo zamiast zdarzenia {@code channel.created}). Dostęp: int.
+     */
+    @PutMapping("/internal/users/{userId}/channel")
+    public UserResponse linkChannel(@PathVariable String userId, @Valid @RequestBody LinkChannelRequest request) {
+        return UserResponse.of(accounts.linkChannel(parse(userId), request.channelId(), request.channelHandle()));
+    }
+
+    private static UUID parse(String userId) {
         try {
-            id = UUID.fromString(userId);
+            return UUID.fromString(userId);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nie znaleźliśmy tego konta.");
         }
-        return UserResponse.of(accounts.get(id));
     }
 }

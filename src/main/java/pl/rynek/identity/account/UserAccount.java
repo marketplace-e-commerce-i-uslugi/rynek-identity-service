@@ -41,6 +41,13 @@ public class UserAccount {
 
     private boolean onboarded;
 
+    /** Kanał z channel-service (usługodawca/merchant); pusty dla kupujących. */
+    @Column(name = "channel_id")
+    private UUID channelId;
+
+    @Column(name = "channel_handle")
+    private String channelHandle;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
@@ -93,6 +100,16 @@ public class UserAccount {
         this.updatedAt = now;
     }
 
+    public void linkChannel(UUID channelId, String channelHandle, Instant now) {
+        this.channelId = channelId;
+        this.channelHandle = channelHandle;
+        this.updatedAt = now;
+    }
+
+    public boolean isSeller() {
+        return roles.contains(Role.SERVICE_PROVIDER) || roles.contains(Role.MERCHANT);
+    }
+
     public UUID getId() {
         return id;
     }
@@ -123,6 +140,14 @@ public class UserAccount {
 
     public boolean isOnboarded() {
         return onboarded;
+    }
+
+    public UUID getChannelId() {
+        return channelId;
+    }
+
+    public String getChannelHandle() {
+        return channelHandle;
     }
 
     public Set<Role> getRoles() {

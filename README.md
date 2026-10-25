@@ -2,7 +2,7 @@
 
 `identity-service` — konta, logowanie, role, profil
 
-> Status: **konta i logowanie działają**: rejestracja, logowanie, odświeżanie i wylogowanie, profil (`GET`/`PATCH /users/me`), role z onboardingu, JWKS i `GET /internal/users/{id}`. Pozostałe endpointy z tabeli zwracają `501 Not Implemented` (RFC 7807).
+> Status: **konta i logowanie działają**: rejestracja, logowanie, odświeżanie i wylogowanie, profil (`GET`/`PATCH /users/me`), role z onboardingu, JWKS, `GET /internal/users/{id}` i przypinanie kanału (`PUT /internal/users/{id}/channel`). Pozostałe endpointy z tabeli zwracają `501 Not Implemented` (RFC 7807).
 
 ## Uruchomienie
 
@@ -57,6 +57,7 @@ Ekrany: 1 Onboarding, Profil, każdy ekran wymagający logowania.
 | PUT | `/api/v1/users/me/saved/{offerId}` | Zapisz ofertę | user |
 | DELETE | `/api/v1/users/me/saved/{offerId}` | Usuń z zapisanych | user |
 | GET | `/internal/users/{userId}` | Dane użytkownika dla innych serwisów | int |
+| PUT | `/internal/users/{userId}/channel` | Przypięcie kanału utworzonego w channel-service (`{channelId, channelHandle}`); tymczasowo zamiast zdarzenia `channel.created`. 403 bez roli usługodawcy/merchanta, 409 gdy konto ma inny kanał | int |
 | GET | `/internal/auth/jwks` | Klucze publiczne JWT (JWKS) dla gateway i serwisów | int |
 
 ### Token dostępowy

@@ -8,7 +8,8 @@ import pl.rynek.identity.account.UserAccount;
 
 /**
  * Profil użytkownika. Kontrakt: {@code User} w rynek-frontend/src/app/core/api/models/identity.ts.
- * {@code channelId}/{@code channelHandle} należą do channel-service; do czasu zdarzenia {@code channel.created} są puste.
+ * {@code channelId}/{@code channelHandle} należą do channel-service, który przypina je przez
+ * {@code PUT /internal/users/{id}/channel}; puste, dopóki konto nie ma kanału.
  */
 public record UserResponse(
         String id,
@@ -33,8 +34,8 @@ public record UserResponse(
                 Initials.of(user.getDisplayName()),
                 user.getAvatarUrl(),
                 user.getRoles().stream().sorted().toList(),
-                null,
-                null,
+                user.getChannelId() == null ? null : user.getChannelId().toString(),
+                user.getChannelHandle(),
                 user.isOnboarded());
     }
 }

@@ -87,6 +87,25 @@ public class AccountService {
     }
 
     /**
+     * Kanał utworzony w channel-service (tymczasowo zamiast zdarzenia {@code channel.created}). Rolę sprawdza się tu,
+     * a nie w channel-service, bo access token tuż po onboardingu ma jeszcze stare role. Ponowne przypięcie tego samego
+     * kanału niczego nie zmienia.
+     */
+    @Transactional
+    public UserAccount linkChannel(UUID userId, UUID channelId, String channelHandle) {
+        UserAccount user = get(userId);
+        if (!user.isSeller()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Kanał może założyć usługodawca albo merchant. Wybierz rolę w ustawieniach konta.");
+        }
+        if (user.getChannelId() != null && !user.getChannelId().equals(channelId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Masz już kanał. Jedno konto może mieć jeden kanał.");
+        }
+        user.linkChannel(channelId, channelHandle, clock.instant());
+        return user;
+    }
+
+    /**
      * Dwa równoległe żądania na ten sam login mogą oba przejść sprawdzenie {@code exists...}; wtedy rozstrzyga
      * unikalny indeks w bazie. Zapis od razu, żeby taki konflikt dał 409, a nie błąd przy zatwierdzaniu transakcji.
      */

@@ -274,6 +274,30 @@ class AuthFlowTests {
     }
 
     @Test
+    void channelServiceLinksChannelToSellerAccount() throws Exception {
+        String tokens = register(body(uniqueEmail())).andReturn().getResponse().getContentAsString();
+        String userId = SignedJWT.parse(JsonPath.<String>read(tokens, "$.accessToken")).getJWTClaimsSet().getSubject();
+        String channelId = UUID.randomUUID().toString();
+        String link = "{\"channelId\":\"" + channelId + "\",\"channelHandle\":\"elektromarket\"}";
+
+        linkChannel(userId, link)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.detail").value("Kanał może założyć usługodawca albo merchant. Wybierz rolę w ustawieniach konta."));
+
+        mvc.perform(put("/api/v1/users/me/roles").header(HttpHeaders.AUTHORIZATION, bearer(tokens))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"roles\":[\"MERCHANT\"]}"))
+                .andExpect(status().isOk());
+        linkChannel(userId, link).andExpect(status().isOk());
+        linkChannel(userId, link).andExpect(status().isOk());
+        linkChannel(userId, "{\"channelId\":\"" + UUID.randomUUID() + "\",\"channelHandle\":\"inny\"}")
+                .andExpect(status().isConflict());
+
+        mvc.perform(get("/api/v1/users/me").header(HttpHeaders.AUTHORIZATION, bearer(tokens)))
+                .andExpect(jsonPath("$.channelId").value(channelId))
+                .andExpect(jsonPath("$.channelHandle").value("elektromarket"));
+    }
+
+    @Test
     void notYetImplementedEndpointsStillReturn501ForLoggedInUser() throws Exception {
         String tokens = register(body(uniqueEmail())).andReturn().getResponse().getContentAsString();
         mvc.perform(get("/api/v1/users/me/addresses").header(HttpHeaders.AUTHORIZATION, bearer(tokens)))
@@ -292,6 +316,10 @@ class AuthFlowTests {
     private ResultActions refresh(String refreshToken) throws Exception {
         return mvc.perform(post("/api/v1/auth/refresh").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"refreshToken\":\"" + refreshToken + "\"}"));
+    }
+
+    private ResultActions linkChannel(String userId, String json) throws Exception {
+        return mvc.perform(put("/internal/users/" + userId + "/channel").contentType(MediaType.APPLICATION_JSON).content(json));
     }
 
     private static String body(String email) {
